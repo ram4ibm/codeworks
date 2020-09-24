@@ -1,0 +1,3 @@
+variables:
+  - group: TF_STATE
+  - group: AKS_SUBSCRIPTION

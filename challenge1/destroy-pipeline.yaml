@@ -1,0 +1,61 @@
+parameters:
+  - name: ENVIRONMENT
+    type: string
+
+
+jobs:
+  - job: BuildAKS
+
+    variables:
+      - template: pipeline_variables/aks-variables.yaml
+      - name: VAR_ENVIRONMENT_NAME
+        value: ${{ parameters.ENVIRONMENT }}
+
+    steps:
+    - task: TerraformInstaller@0
+      displayName: 'Use Terraform 0.13.2'
+      inputs:
+        terraformVersion: '0.13.2'
+
+    - task: replacetokens@3
+      displayName: 'Perform Token Replacement'
+      inputs:
+        rootDirectory: '$(Build.Repository.LocalPath)/terraform'
+        targetFiles: "**/*.*"
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '#{'
+        tokenSuffix: '}#'
+        useLegacyPattern: false
+        enableTelemetry: true
+
+
+    - script: |
+        cd $(Build.Repository.LocalPath)/terraform
+        terraform init
+      displayName: 'Terraform - Init'
+
+    - script: |
+        cd $(Build.Repository.LocalPath)/terraform
+        terraform validate
+      displayName: 'Terraform - validate'
+
+    - script: |
+        cd $(Build.Repository.LocalPath)/terraform
+        terraform plan -input=false -no-color
+      displayName: 'Terraform - plan'
+
+    - script: |
+        cd $(Build.Repository.LocalPath)/terraform
+        terraform destroy -input=false -no-color -auto-approve
+      displayName: 'Terraform - Destroy'
+
+        
+
+    
+
+    
+
+
